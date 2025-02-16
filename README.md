@@ -1,2 +1,2 @@
 # GameOfLife
-A cross-platform implementation of Conway's Game of Life in C. Features an interactive menu, multiple patterns, and a demo mode. Runs on Windows &amp; Linux.
+Conway's Game of Life implemented in C with two separate versions: one for Windows and one for Linux. Features an interactive menu, multiple patterns, customizable cell placement, and a demo mode.
