@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+#error "This program only supports Linux!"
+#endif /* _WIN32 */
+
 #define ZERO 0
 #define ONE 1
 #define TWO 2
