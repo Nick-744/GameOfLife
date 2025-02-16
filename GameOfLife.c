@@ -281,18 +281,35 @@ void gamestate_initialize(char gamestate_local[ROWS][COLS])
 
 /**************** Patterns | Start ****************/
 
-void place_pattern(int x, int y, char gamestate_local[ROWS][COLS],
+void place_pattern(int* x, int* y, char gamestate_local[ROWS][COLS],
                    int pattern_rows, int pattern_cols, int pattern[])
 {
-    int i, j;
-    for (i = 0; i < pattern_rows; i++)
-        for (j = 0; j < pattern_cols; j++)
-            /* Ensure within bounds! */
-            if (((x + i) >= 0 && (x + i) < ROWS
-             && (y + j) >= 0 && (y + j) < COLS)
-             && pattern[i * pattern_cols + j] == 1)
-                /* Compute 2D index manually! */
-                gamestate_local[x + i][y + j] = pattern[i * pattern_cols + j];
+    {   /* Check if the pattern is out of bounds */
+        bool check_x = ((*x) + pattern_rows) > ROWS;
+        bool check_y = ((*y) + pattern_cols) > COLS;
+
+        printf("\n\r");
+        if (check_x || check_y)
+            printf("Out of bounds!");
+        else
+            clear_line();
+        if (check_x)
+            (*x)--;
+        if (check_y)
+            (*y)--;
+    }
+
+    {
+        int i, j;
+        for (i = 0; i < pattern_rows; i++)
+            for (j = 0; j < pattern_cols; j++)
+                /* Ensure within bounds! */
+                if ((((*x) + i) >= 0 && ((*x) + i) < ROWS
+                 && ((*y) + j) >= 0 && ((*y) + j) < COLS)
+                 && pattern[i * pattern_cols + j] == 1)
+                    /* Compute 2D index manually! */
+                    gamestate_local[(*x) + i][(*y) + j] = pattern[i * pattern_cols + j];
+    }
 
     return;
 }
@@ -317,13 +334,14 @@ void create_game_of_life(void)
         {1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
         {1,1,1,1,1,1,1,0,1,1,1,0,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
     };
+    int x = 6, y = 2;
     gamestate_initialize(gamestate);
-    place_pattern(6, 2, gamestate, 15, 50, (int*) pattern);
+    place_pattern(&x, &y, gamestate, 15, 50, (int*) pattern);
 
     return;
 }
 
-void create_pulsar(int x, int y, char gamestate_local[ROWS][COLS])
+void create_pulsar(int* x, int* y, char gamestate_local[ROWS][COLS])
 {
     int pattern[13][13] =
     {
@@ -346,7 +364,7 @@ void create_pulsar(int x, int y, char gamestate_local[ROWS][COLS])
     return;
 }
 
-void create_penta_decathlon(int x, int y, char gamestate_local[ROWS][COLS])
+void create_penta_decathlon(int* x, int* y, char gamestate_local[ROWS][COLS])
 {
     int pattern[10][9] =
     {
@@ -366,7 +384,7 @@ void create_penta_decathlon(int x, int y, char gamestate_local[ROWS][COLS])
     return;
 }
 
-void create_lwss(int x, int y, char gamestate_local[ROWS][COLS])
+void create_lwss(int* x, int* y, char gamestate_local[ROWS][COLS])
 {
     int pattern[4][5] =
     {
@@ -380,7 +398,7 @@ void create_lwss(int x, int y, char gamestate_local[ROWS][COLS])
     return;
 }
 
-void create_beacon(int x, int y, char gamestate_local[ROWS][COLS])
+void create_beacon(int* x, int* y, char gamestate_local[ROWS][COLS])
 {
     int pattern[4][4] =
     {
@@ -394,7 +412,7 @@ void create_beacon(int x, int y, char gamestate_local[ROWS][COLS])
     return;
 }
 
-void create_boat(int x, int y, char gamestate_local[ROWS][COLS])
+void create_boat(int* x, int* y, char gamestate_local[ROWS][COLS])
 {
     int pattern[3][3] =
     {
@@ -407,7 +425,7 @@ void create_boat(int x, int y, char gamestate_local[ROWS][COLS])
     return;
 }
 
-void create_R_pentomino(int x, int y, char gamestate_local[ROWS][COLS])
+void create_R_pentomino(int* x, int* y, char gamestate_local[ROWS][COLS])
 {
     int pattern[3][3] =
     {
@@ -516,11 +534,26 @@ void gamestate_demo(void)
 {
     gamestate_initialize(gamestate);
 
-    create_pulsar(2, 2, gamestate);
-    create_beacon(4, 22, gamestate);
-    create_boat(10, 23, gamestate);
-    create_penta_decathlon(4, 30, gamestate);
-    create_lwss(20, 15, gamestate);
+    {
+        int x = 2, y = 2;
+        create_pulsar(&x, &y, gamestate);
+    }
+    {
+        int x = 4, y = 22;
+        create_beacon(&x, &y, gamestate);
+    }
+    {
+        int x = 10, y = 23;
+        create_boat(&x, &y, gamestate);
+    }
+    {
+        int x = 4, y = 30;
+        create_penta_decathlon(&x, &y, gamestate);
+    }
+    {
+        int x = 20, y = 15;
+        create_lwss(&x, &y, gamestate);
+    }
 
     return;
 }
@@ -552,14 +585,12 @@ const char* patterns[NUM_PATTERNS] =
 
 void gameplay_select(void)
 {
-    void (*add_patterns[NUM_PATTERNS])(int, int, char [ROWS][COLS]) =
+    void (*add_patterns[NUM_PATTERNS])(int*, int*, char [ROWS][COLS]) =
     {
         NULL, create_pulsar, create_penta_decathlon,
         create_lwss, create_beacon, create_boat,
         create_R_pentomino, NULL
     };
-    char gamestate_copy[ROWS][COLS];
-    gamestate_initialize(gamestate_copy);
 
     gamestate_initialize(gamestate);
     gamestate_initialize(gamestate_temp);
@@ -576,7 +607,7 @@ void gameplay_select(void)
         else if (selected == 7) /* Set cell */
             gamestate[x][y] = 1;
         else if (add_patterns[selected] != NULL) /* Set pattern */
-            add_patterns[selected](x, y, gamestate);
+            add_patterns[selected](&x, &y, gamestate);
 
         for (;;)
         {
@@ -602,6 +633,20 @@ void gameplay_select(void)
 
                 if (selected == 7) /* Set cell */
                 {
+                    {   /* Check if the cell is out of bounds */
+                        bool check_x = (x + 1) > ROWS;
+                        bool check_y = (y + 1) > COLS;
+
+                        printf("\n\r");
+                        if (check_x || check_y)
+                            printf("Out of bounds!");
+                        else
+                            clear_line();
+                        if (check_x)
+                            x--;
+                        if (check_y)
+                            y--;
+                    }
                     gamestate_initialize(gamestate);
                     add_gamestates();
                     gamestate[x][y] = 1;
@@ -612,12 +657,11 @@ void gameplay_select(void)
                 {
                     gamestate_initialize(gamestate);
                     add_gamestates();
-                    add_patterns[selected](x, y, gamestate);
+                    add_patterns[selected](&x, &y, gamestate);
                 }
             }
         }
-        memcpy(gamestate_copy, gamestate, sizeof(gamestate));
-        memcpy(gamestate_temp, gamestate_copy, sizeof(gamestate));
+        memcpy(gamestate_temp, gamestate, sizeof(gamestate));
     }
 
     return;
