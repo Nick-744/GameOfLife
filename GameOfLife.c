@@ -1,140 +1,73 @@
 #include <stdio.h>
 #include <string.h>
 
-/**************** Cross-platform | Start ****************/
+/**************** Windows-platform | Start ****************/
+
+#ifdef _WIN32  // Only compile if Windows
+
+#include <windows.h>
+#include <conio.h>  /* kbhit(), getch() */
+
 /*
- * Cross-platform handling of:
- * - usleep (Windows needs Sleep-based workaround)
- * - non-blocking input detection (kbhit or select)
- * - single-key capture (getch on Windows, termios on Linux/macOS)
- * - hiding the cursor
- * - printing colored text
+ * Redefine usleep on Windows:
+ * usleep(x) => Sleep(x/1000)
+ * Because Sleep() is in milliseconds,
+ * while usleep() is in microseconds.
  */
+#define usleep(usec) Sleep((usec)/1000)
 
-#ifdef _WIN32
+/* Input detection (Windows) */
+#define input_available()  kbhit()
 
-    #include <windows.h>
-    #include <conio.h>  /* kbhit(), getch() */
+/* Single key press (Windows) */
+#define get_key_pressed()  getch()
 
-    /*
-     * Redefine usleep on Windows:
-     * usleep(x) => Sleep(x/1000)
-     * Because Sleep() is in milliseconds,
-     * while usleep() is in microseconds.
-     */
-    #define usleep(usec) Sleep((usec)/1000)
+/* Hide cursor (Windows) */
+void hide_cursor(void)
+{
+    HANDLE console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO info;
+    info.dwSize = 100;
+    info.bVisible = FALSE;
+    SetConsoleCursorInfo(console_handle, &info);
 
-    /* Input detection (Windows) */
-    #define input_available()  kbhit()
+    return;
+}
 
-    /* Single key press (Windows) */
-    #define get_key_pressed()  getch()
+/* Show cursor (Windows) */
+void show_cursor(void)
+{
+    HANDLE console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO info;
+    info.dwSize = 100;
+    info.bVisible = TRUE; /* Show cursor */
+    SetConsoleCursorInfo(console_handle, &info);
 
-    /* Hide cursor (Windows) */
-    void hide_cursor(void)
-    {
-        HANDLE console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-        CONSOLE_CURSOR_INFO info;
-        info.dwSize = 100;
-        info.bVisible = FALSE;
-        SetConsoleCursorInfo(console_handle, &info);
+    return;
+}
 
-        return;
-    }
+#define CLEAR_SCREEN "cls"
+void moveCursorHome(void)
+{
+    /* Get a handle to the standard output (your console) */
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    void show_cursor(void)
-    {
-        HANDLE console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-        CONSOLE_CURSOR_INFO info;
-        info.dwSize = 100;
-        info.bVisible = TRUE; /* Show cursor */
-        SetConsoleCursorInfo(console_handle, &info);
+    /* Create a COORD structure that sets the position to column=0, row=0 */
+    COORD home = {0, 0};
 
-        return;
-    }
+    /* This call repositions the cursor in the console window to (0,0) */
+    SetConsoleCursorPosition(hConsole, home);
 
-    #define CLEAR_SCREEN "cls"
-    void moveCursorHome(void)
-    {
-        /* Get a handle to the standard output (your console) */
-        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    return;
+}
 
-        /* Create a COORD structure that sets the position to column=0, row=0 */
-        COORD home = {0, 0};
-
-        /* This call repositions the cursor in the console window to (0,0) */
-        SetConsoleCursorPosition(hConsole, home);
-
-        return;
-    }
-
-#else /* Linux / macOS */
-
-    #include <unistd.h>      /* usleep() */
-    #include <sys/select.h>  /* select() */
-    #include <termios.h>     /* termios, tcgetattr, tcsetattr */
-
-    /*
-     * Check if input is available without blocking (Linux/macOS).
-     * Returns non-zero if a key is ready.
-     */
-    int input_available(void)
-    {
-        struct timeval tv = {0, 0}; /* zero timeout => no blocking */
-        fd_set fds;
-
-        FD_ZERO(&fds);
-        FD_SET(STDIN_FILENO, &fds);
-
-        /*
-         * select returns > 0 if input is ready in stdin.
-         * STDIN_FILENO + 1 => number of file descriptors to check.
-         */
-        return select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
-    }
-
-    /*
-     * Equivalent to getch() on Linux/macOS using termios.
-     * Reads a single keypress without waiting for Enter,
-     * and without echoing the character.
-     */
-    int get_key_pressed(void)
-    {
-        struct termios oldt, newt;
-        int ch;
-
-        /* Save current terminal settings */
-        tcgetattr(STDIN_FILENO, &oldt);
-        newt = oldt;
-
-        /* Turn off canonical mode and echo */
-        newt.c_lflag &= ~(ICANON | ECHO);
-        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-
-        /* Read one character */
-        ch = getchar();
-
-        /* Restore the old settings */
-        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-
-        return ch;
-    }
-
-    /* Hide cursor (Linux/macOS) using ANSI escape code */
-    #define hide_cursor() printf("\x1b[?25l")
-    #define show_cursor() printf("\x1b[?25h")
-
-    #define CLEAR_SCREEN "clear"
-    void moveCursorHome(void)
-    {
-        printf("\x1b[H"); /* Move cursor to (0,0) */
-
-        return;
-    }
+#else
+/* If not Windows, cancel everything */
+#error "This program only supports Windows!\n"
 
 #endif /* _WIN32 */
 
-/**************** Cross-platform | End ****************/
+/**************** Windows-platform | End ****************/
 
 #define ENTER 13
 #define SPACE ' '
