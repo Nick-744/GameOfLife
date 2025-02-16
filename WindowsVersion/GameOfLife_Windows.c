@@ -562,7 +562,13 @@ void gameplay_select(void)
                 if (input == 's' || input == 'S' || input == DOWN_ARROW)
                     if (x < ROWS)
                         x++;
-                if (input == ENTER) break;
+                if (input == ENTER)
+                {   /* Clear "Population" & "Out of bounds!" */
+                    printf("\r");
+                    clear_line();
+                    printf("\n");
+                    break;
+                }
 
                 if (selected == 7) /* Set cell */
                 {
